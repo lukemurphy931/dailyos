@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Daily OS">
+<meta name="theme-color" content="#0e0e10">
+<title>Daily OS</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#0e0e10;--s1:#14141a;--s2:#1b1b22;--s3:#222229;
+  --b1:rgba(255,255,255,0.06);--b2:rgba(255,255,255,0.12);
+  --text:#f0f0f0;--muted:#6a6a7a;--faint:#2e2e38;
+  --purple:#9d8ff5;--pd:rgba(157,143,245,0.11);--pb:rgba(157,143,245,0.25);
+  --green:#169B62;--gd:rgba(22,155,98,0.1);--gb:rgba(22,155,98,0.3);
+  --red:#f87171;--rd:rgba(248,113,113,0.09);--rb:rgba(248,113,113,0.28);
+  --amber:#fbbf24;--teal:#2dd4bf;
+  --r:14px;--rsm:9px;
+  --sat:env(safe-area-inset-top,0px);
+  --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px);
+  --sar:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%;height:-webkit-fill-available}
+body{height:100%;height:-webkit-fill-available;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px}
+.app{display:flex;flex-direction:column;min-height:100%;min-height:-webkit-fill-available;background:var(--bg)}
+.topbar{padding:calc(var(--sat) + 16px) 20px 12px 20px;flex-shrink:0;background:var(--bg)}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start}
+.logo{font-family:'DM Mono',monospace;font-size:10px;color:var(--purple);letter-spacing:0.16em;margin-bottom:3px}
+.greeting{font-size:20px;font-weight:300;letter-spacing:-0.01em}
+.hdr-right{text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:2}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:0 20px 20px 20px}
+.scroll::-webkit-scrollbar{display:none}
+.nav{flex-shrink:0;background:var(--s1);border-top:1px solid var(--b1);display:flex;flex-direction:column;position:relative}
+.nav::after{content:'';display:block;height:env(safe-area-inset-bottom,34px);background:var(--s1)}
+.nav-items{display:flex;padding-top:10px;padding-bottom:10px}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 2px;border:none;background:none;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif}
+.nb.active{color:var(--purple)}
+.ni{font-size:18px;line-height:1}
+.nl{font-size:10px;font-weight:500;letter-spacing:0.03em;text-transform:uppercase;white-space:nowrap}
+.nav-items .nb{flex:1}
+.nav-items .nb-checkin{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 2px;border:none;background:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.page{display:none}
+.page.active{display:block;animation:fi 0.15s ease}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.sl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.13em;color:var(--muted);text-transform:uppercase;margin:18px 0 8px;opacity:0.7}
+.sl:first-child{margin-top:0}
+.streak{display:flex;gap:5px;margin-bottom:14px}
+.sd{flex:1;height:5px;border-radius:3px;background:var(--faint)}
+.sd.full{background:var(--green)}.sd.partial{background:var(--amber)}.sd.fail-d{background:var(--red);opacity:0.5}.sd.today-d{background:var(--purple)}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.met{background:var(--s1);border-radius:var(--rsm);padding:12px}
+.met-l{font-size:9px;color:var(--muted);margin-bottom:5px;letter-spacing:0.04em;text-transform:uppercase}
+.met-v{font-family:'DM Mono',monospace;font-size:20px}
+.met-v.purple{color:var(--purple)}
+.clist{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.citem{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--b1)}
+.citem:last-child{border-bottom:none}
+.citem-col{flex:1;min-width:0}
+.ci-lbl{font-size:14px}
+.ci-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.ci-btns{display:flex;gap:6px;flex-shrink:0}
+.ci-btn{font-size:13px;padding:8px 14px;border-radius:var(--rsm);border:1px solid var(--b1);background:none;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif;min-width:50px;text-align:center}
+.ci-btn.yes{border-color:var(--gb);color:var(--green);background:var(--gd)}
+.ci-btn.no{border-color:var(--rb);color:var(--red);background:var(--rd)}
+.chk{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--faint);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.chk.on{background:var(--green);border-color:var(--green)}
+.chk.on::after{content:'';width:7px;height:6px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px);display:block}
+.itime{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);flex-shrink:0}
+.sess{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:16px;margin-bottom:10px}
+.sess-wk{font-family:'DM Mono',monospace;font-size:10px;color:var(--purple);letter-spacing:0.08em;margin-bottom:5px}
+.sess-desc{font-size:15px;margin-bottom:12px;line-height:1.4}
+.sess-btns{display:flex;gap:8px}
+.s-btn{flex:1;padding:11px;border-radius:var(--rsm);border:1px solid var(--b1);background:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);font-family:'DM Sans',sans-serif}
+.s-btn.done{border-color:var(--gb);color:var(--green);background:var(--gd)}
+.s-btn.missed{border-color:var(--rb);color:var(--red);background:var(--rd)}
+.rest-pill{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;font-size:14px;color:var(--muted)}
+.cal-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--b1)}
+.cal-item:last-child{border-bottom:none}
+.cal-dot{width:7px;height:7px;border-radius:50%;background:var(--purple);flex-shrink:0;margin-top:4px}
+.cal-time{font-family:'DM Mono',monospace;font-size:11px;color:var(--purple);width:44px;flex-shrink:0}
+.cal-title{font-size:14px}
+.cal-empty{padding:14px 16px;font-size:13px;color:var(--muted)}
+.hist-day{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:14px;margin-bottom:8px}
+.hist-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.hist-date{font-size:13px;font-weight:500}
+.hist-score{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+.hist-pills{display:flex;flex-wrap:wrap;gap:5px}
+.pill{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:500}
+.pill.ok{background:var(--gd);color:var(--green);border:1px solid var(--gb)}
+.pill.bad{background:var(--rd);color:var(--red);border:1px solid var(--rb)}
+.pill.skip{background:var(--s2);color:var(--muted);border:1px solid var(--b1)}
+.hist-note{font-size:12px;color:var(--muted);margin-top:8px;font-style:italic;line-height:1.5;padding-top:8px;border-top:1px solid var(--b1)}
+.week-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
+.week-hdr{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+.week-title{font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
+.week-prog{width:60px;height:3px;background:var(--faint);border-radius:2px;overflow:hidden;margin-top:5px}
+.week-prog-fill{height:100%;border-radius:2px;background:var(--green)}
+.week-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+.week-chev{font-size:13px;color:var(--muted);transition:transform 0.2s}
+.week-chev.open{transform:rotate(90deg)}
+.week-body{border-top:1px solid var(--b1);display:none}
+.week-body.open{display:block}
+.plan-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--b1)}
+.plan-row:last-child{border-bottom:none}
+.plan-day{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);width:28px;flex-shrink:0}
+.plan-desc{font-size:13px;flex:1;line-height:1.4}
+.plan-desc.rest-t{color:var(--muted)}
+.plan-btn{font-size:12px;padding:5px 11px;border-radius:var(--rsm);border:1px solid var(--b1);background:none;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif}
+.plan-btn.done{border-color:var(--gb);color:var(--green);background:var(--gd)}
+.plan-btn.missed{border-color:var(--rb);color:var(--red);background:var(--rd)}
+.curr-badge{font-size:9px;padding:2px 7px;border-radius:10px;background:var(--pd);color:var(--purple);border:1px solid var(--pb)}
+.todo-add{display:flex;gap:8px;margin-bottom:12px}
+.todo-inp{flex:1;font-size:14px;padding:12px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--s1);color:var(--text);font-family:'DM Sans',sans-serif}
+.todo-inp:focus{outline:none;border-color:var(--b2)}
+.todo-sel{font-size:13px;padding:12px 8px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--s1);color:var(--muted);font-family:'DM Sans',sans-serif}
+.tadd-btn{padding:12px 16px;font-size:14px;border-radius:var(--rsm);border:1px solid var(--b2);background:none;cursor:pointer;color:var(--text);font-family:'DM Sans',sans-serif}
+.fltrs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fbtn{font-size:12px;padding:6px 12px;border-radius:20px;border:1px solid var(--b1);background:none;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif}
+.fbtn.active{border-color:var(--b2);color:var(--text);background:var(--s2)}
+.tcnt{font-size:11px;color:var(--faint);font-family:'DM Mono',monospace;margin-bottom:10px}
+.tlist{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden}
+.ti{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--b1)}
+.ti:last-child{border-bottom:none}
+.tck{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--faint);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.14s}
+.tck.on{background:var(--green);border-color:var(--green)}
+.tck.on::after{content:'';width:7px;height:6px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px);display:block}
+.ttxt{font-size:14px;flex:1;cursor:pointer}
+.ttxt.done{text-decoration:line-through;color:var(--faint)}
+.ttag{font-size:11px;padding:3px 8px;border-radius:10px;flex-shrink:0;font-weight:500}
+.tag-work{background:var(--pd);color:var(--purple);border:1px solid var(--pb)}
+.tag-personal{background:rgba(45,212,191,0.08);color:var(--teal);border:1px solid rgba(45,212,191,0.25)}
+.tag-interviews{background:rgba(251,191,36,0.09);color:var(--amber);border:1px solid rgba(251,191,36,0.25)}
+.tdel{background:none;border:none;cursor:pointer;color:var(--faint);font-size:18px;padding:0 4px;flex-shrink:0;line-height:1}
+.rs-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.rs-hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--b1)}
+.rs-name{font-size:14px;font-weight:500}
+.rs-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--b1)}
+.rs-item:last-child{border-bottom:none}
+.rs-item-name{font-size:13px;flex:1}
+.rs-item-sub{font-size:11px;color:var(--muted)}
+.rs-del{background:none;border:none;cursor:pointer;color:var(--faint);font-size:18px;padding:0 4px}
+.rs-add-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--b1)}
+.rs-inp{flex:1;font-size:13px;padding:8px 10px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--s2);color:var(--text);font-family:'DM Sans',sans-serif}
+.rs-inp:focus{outline:none;border-color:var(--b2)}
+.rs-sub-inp{width:74px;font-size:13px;padding:8px 10px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--s2);color:var(--muted);font-family:'DM Sans',sans-serif}
+.rs-add-btn{font-size:13px;padding:8px 12px;border-radius:var(--rsm);border:1px solid var(--b2);background:none;cursor:pointer;color:var(--text);font-family:'DM Sans',sans-serif}
+.new-rs-row{display:flex;gap:8px;margin-bottom:16px}
+.new-rs-inp{flex:1;font-size:14px;padding:12px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--s1);color:var(--text);font-family:'DM Sans',sans-serif}
+.new-rs-inp:focus{outline:none;border-color:var(--b2)}
+.new-rs-btn{padding:12px 16px;font-size:14px;border-radius:var(--rsm);border:1px solid var(--b2);background:none;cursor:pointer;color:var(--text);font-family:'DM Sans',sans-serif}
+.settings-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:16px;margin-bottom:10px}
+.settings-lbl{font-size:12px;color:var(--muted);margin-bottom:8px}
+.settings-inp{width:100%;font-size:13px;padding:10px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--s2);color:var(--text);font-family:'DM Mono',monospace;margin-bottom:10px}
+.settings-inp:focus{outline:none;border-color:var(--b2)}
+.settings-btn{font-size:13px;padding:9px 16px;border-radius:var(--rsm);border:1px solid var(--b2);background:none;cursor:pointer;color:var(--text);font-family:'DM Sans',sans-serif}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:flex-end;justify-content:center;z-index:200}
+.modal-bg.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:560px;padding:24px 20px calc(24px + var(--sab));max-height:88dvh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:400;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.5}
+.modal-q{margin-bottom:20px}
+.modal-qlbl{font-size:14px;font-weight:500;margin-bottom:10px}
+.modal-btns{display:flex;gap:8px}
+.modal-btn{flex:1;padding:13px;border-radius:var(--rsm);border:1px solid var(--b1);background:none;cursor:pointer;font-size:14px;color:var(--muted);font-family:'DM Sans',sans-serif}
+.modal-btn.yes{border-color:var(--gb);color:var(--green);background:var(--gd)}
+.modal-btn.no{border-color:var(--rb);color:var(--red);background:var(--rd)}
+.modal-note{width:100%;font-size:14px;padding:12px;border-radius:var(--rsm);border:1px solid var(--b1);background:var(--s2);color:var(--text);font-family:'DM Sans',sans-serif;resize:none;margin-top:10px}
+.modal-note:focus{outline:none;border-color:var(--b2)}
+.modal-footer{display:flex;justify-content:space-between;align-items:center;margin-top:22px}
+.modal-save{padding:13px 24px;border-radius:var(--rsm);border:1px solid var(--b2);background:none;cursor:pointer;font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif}
+.modal-skip{font-size:13px;color:var(--faint);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.nb-checkin{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 2px;border:none;background:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.nb-checkin-inner{background:var(--purple);border-radius:16px;padding:8px 14px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.nb-checkin .ni{font-size:16px;line-height:1;color:#fff}
+.nb-checkin .nl{font-size:10px;font-weight:500;letter-spacing:0.03em;text-transform:uppercase;color:#fff;white-space:nowrap}
+.empty{padding:20px;font-size:14px;color:var(--muted);text-align:center}
+.rl{font-size:12px;color:var(--faint);background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:12px;display:block;font-family:'DM Sans',sans-serif}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="hdr">
+      <div><div class="logo">DAILY · OS</div><div class="greeting" id="greeting">Good evening, Luke.</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <button onclick="switchPage('routines',null)" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:0">⚙︎</button>
+        <div class="hdr-right" id="hdr-right"></div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="page-today" class="page active">
+      <div class="streak" id="streak-today"></div>
+      <div class="metrics">
+        <div class="met"><div class="met-l">Rules</div><div class="met-v" id="m-rules">—</div></div>
+        <div class="met"><div class="met-l">Routine</div><div class="met-v" id="m-routine">—</div></div>
+        <div class="met"><div class="met-l">Streak</div><div class="met-v purple" id="m-streak">0d</div></div>
+      </div>
+      <div class="sl">Today's training</div>
+      <div id="today-session"></div>
+      <div class="sl">Today's events</div>
+      <div class="clist" id="cal-events"></div>
+      <div class="sl">Hard rules</div>
+      <div class="clist" id="rules-list"></div>
+      <div class="sl">Morning routine</div>
+      <div class="clist" id="morning-list"></div>
+      <div class="sl">Evening routine</div>
+      <div class="clist" id="evening-list"></div>
+      <button class="rl" onclick="resetDay()">reset today</button>
+    </div>
+    <div id="page-todo" class="page">
+      <div class="todo-add">
+        <input class="todo-inp" type="text" id="todo-inp" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTodo()">
+        <select class="todo-sel" id="todo-sel"><option value="work">Work</option><option value="interviews">Interviews</option><option value="personal">Personal</option></select>
+        <button class="tadd-btn" onclick="addTodo()">+</button>
+      </div>
+      <div class="fltrs">
+        <button class="fbtn active" onclick="setFilter('all',this)">All</button>
+        <button class="fbtn" onclick="setFilter('work',this)">Work</button>
+        <button class="fbtn" onclick="setFilter('interviews',this)">Interviews</button>
+        <button class="fbtn" onclick="setFilter('personal',this)">Personal</button>
+        <button class="fbtn" onclick="setFilter('done',this)">Done</button>
+      </div>
+      <div class="tcnt" id="tcnt"></div>
+      <div class="tlist" id="tlist"></div>
+      <button class="rl" onclick="clearDone()">clear completed</button>
+    </div>
+    <div id="page-training" class="page">
+      <div class="sl" style="margin-top:0">Half marathon · Race 23 Aug 2026</div>
+      <div id="plan-weeks"></div>
+    </div>
+    <div id="page-history" class="page">
+      <div class="sl" style="margin-top:0">7-day streak</div>
+      <div class="streak" id="streak-hist"></div>
+      <div class="sl">Day log</div>
+      <div id="hist-list"></div>
+    </div>
+    <div id="page-routines" class="page">
+      <div class="sl" style="margin-top:0">Calendar</div>
+      <div class="settings-card">
+        <div class="settings-lbl">iCal feed URL</div>
+        <input class="settings-inp" type="text" id="cal-url-inp" placeholder="https://p10-caldav.icloud.com/..." oninput="saveSetting('calUrl',this.value)">
+        <div class="settings-lbl">Or type today's events (HH:MM Event name)</div>
+        <textarea class="settings-inp" id="cal-manual" rows="4" placeholder="09:00 Standup&#10;14:00 Interview prep" oninput="saveSetting('calManual',this.value);renderCalEvents()" style="resize:none;margin-bottom:10px"></textarea>
+        <button class="settings-btn" onclick="fetchCalendar()">Fetch calendar</button>
+      </div>
+      <div class="sl">Notifications</div>
+      <div class="settings-card">
+        <div class="settings-lbl">Evening check-in time (default 9pm)</div>
+        <input class="settings-inp" type="time" id="notif-time" value="21:00" oninput="saveSetting('notifTime',this.value)" style="margin-bottom:10px">
+        <button class="settings-btn" onclick="requestNotif()">Enable notifications</button>
+      </div>
+      <div class="sl">Rule sets</div>
+      <div id="rulesets-editor"></div>
+      <div class="new-rs-row">
+        <input class="new-rs-inp" type="text" id="new-rs-name" placeholder="New ruleset name...">
+        <button class="new-rs-btn" onclick="addRuleset()">+ Add</button>
+      </div>
+    </div>
+  </div>
+  <div class="nav">
+    <div class="nav-items">
+      <button class="nb active" onclick="switchPage('today',this)"><span class="ni">◉</span><span class="nl">Today</span></button>
+      <button class="nb" onclick="switchPage('todo',this)"><span class="ni">◈</span><span class="nl">To do</span></button>
+      <button class="nb-checkin" onclick="openCheckin()"><div class="nb-checkin-inner"><span class="ni">🌙</span><span class="nl">Check in</span></div></button>
+      <button class="nb" onclick="switchPage('training',this)"><span class="ni">◎</span><span class="nl">Training</span></button>
+      <button class="nb" onclick="switchPage('history',this)"><span class="ni">◑</span><span class="nl">History</span></button>
+    </div>
+    <div class="nav-safe"></div>
+  </div>
+</div>
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-title">Evening check-in</div>
+    <div class="modal-sub">Pre-filled from today — just confirm or change anything.</div>
+    <div id="modal-qs"></div>
+    <div class="modal-footer">
+      <button class="modal-save" onclick="saveCheckin()">Save & close</button>
+      <button class="modal-skip" onclick="closeModal()">Skip</button>
+    </div>
+  </div>
+</div>
+<script>
+const SUPA_URL='https://pvvmqmktrrjatgpcxtvz.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2dm1xbWt0cnJqYXRncGN4dHZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2NDQ2ODAsImV4cCI6MjA5MzIyMDY4MH0.P7Q-wo8zvXBGl9TVJAz-_puG-hvxs8MJ8NWu38TMa3I';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+const UID='luke';
+
+function ll(k){try{return JSON.parse(localStorage.getItem('dos_'+k)??'null')}catch{return null}}
+function ls(k,v){try{localStorage.setItem('dos_'+k,JSON.stringify(v))}catch{}}
+async function dbSet(k,v){try{await sb.from('kv').upsert({user_id:UID,key:k,value:v,updated_at:new Date().toISOString()})}catch{}}
+async function dbGet(k){try{const{data}=await sb.from('kv').select('value').eq('user_id',UID).eq('key',k).single();return data?.value??null}catch{return null}}
+async function syncDown(){try{const{data}=await sb.from('kv').select('key,value').eq('user_id',UID);if(data)data.forEach(r=>{if(ll(r.key)===null)ls(r.key,r.value)})}catch{}}
+async function gset(k,v){ls(k,v);dbSet(k,v)}
+async function gget(k){const l=ll(k);if(l!==null)return l;const r=await dbGet(k);if(r!==null)ls(k,r);return r}
+
+const PLAN_START=new Date('2026-04-06');
+const RACE_DATE=new Date('2026-08-23');
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const WEEKS=[
+  {w:1,s:[{d:0,t:'gym',desc:'Upper body — foundation'},{d:1,t:'run',desc:'Easy run 4km'},{d:2,t:'gym',desc:'Lower body — squats & lunges'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 3km'},{d:5,t:'opt',desc:'Optional easy movement'},{d:6,t:'run',desc:'Long run 8km'}]},
+  {w:2,s:[{d:0,t:'gym',desc:'Upper body'},{d:1,t:'run',desc:'Easy run 5km'},{d:2,t:'gym',desc:'Lower body'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 3.5km'},{d:5,t:'opt',desc:'Optional cross-train'},{d:6,t:'run',desc:'Long run 9km'}]},
+  {w:3,s:[{d:0,t:'gym',desc:'Upper body'},{d:1,t:'run',desc:'Easy run 5km'},{d:2,t:'gym',desc:'Lower body'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 4km'},{d:5,t:'opt',desc:'Optional cross-train'},{d:6,t:'run',desc:'Long run 10km'}]},
+  {w:4,s:[{d:0,t:'gym',desc:'Upper body — deload'},{d:1,t:'run',desc:'Easy run 4km — recovery'},{d:2,t:'gym',desc:'Lower body — lighter'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Easy run 4km'},{d:5,t:'rest',desc:'Rest'},{d:6,t:'run',desc:'Long run 8km — easy'}]},
+  {w:5,s:[{d:0,t:'gym',desc:'Upper body'},{d:1,t:'run',desc:'Easy run 6km'},{d:2,t:'gym',desc:'Lower body'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 4km'},{d:5,t:'opt',desc:'Optional cross-train'},{d:6,t:'run',desc:'Long run 11km'}]},
+  {w:6,s:[{d:0,t:'gym',desc:'Upper body'},{d:1,t:'run',desc:'Easy run 6km'},{d:2,t:'gym',desc:'Lower body'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 5km'},{d:5,t:'opt',desc:'Optional cross-train'},{d:6,t:'run',desc:'Long run 12km'}]},
+  {w:7,s:[{d:0,t:'gym',desc:'Upper body'},{d:1,t:'run',desc:'Easy run 6km'},{d:2,t:'gym',desc:'Lower body'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 5km'},{d:5,t:'opt',desc:'Optional cross-train'},{d:6,t:'run',desc:'Long run 13km'}]},
+  {w:8,s:[{d:0,t:'gym',desc:'Upper body — deload'},{d:1,t:'run',desc:'Easy run 5km — recovery'},{d:2,t:'gym',desc:'Lower body — lighter'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Easy run 5km'},{d:5,t:'rest',desc:'Rest'},{d:6,t:'run',desc:'Long run 10km — easy'}]},
+  {w:9,s:[{d:0,t:'gym',desc:'Upper body'},{d:1,t:'run',desc:'Easy run 7km'},{d:2,t:'gym',desc:'Lower body'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 6km'},{d:5,t:'opt',desc:'Optional cross-train'},{d:6,t:'run',desc:'Long run 14km'}]},
+  {w:10,s:[{d:0,t:'gym',desc:'Upper body'},{d:1,t:'run',desc:'Easy run 7km'},{d:2,t:'gym',desc:'Lower body'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 6km'},{d:5,t:'opt',desc:'Optional cross-train'},{d:6,t:'run',desc:'Long run 15km'}]},
+  {w:11,s:[{d:0,t:'gym',desc:'Upper body'},{d:1,t:'run',desc:'Easy run 7km'},{d:2,t:'gym',desc:'Lower body'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 7km'},{d:5,t:'opt',desc:'Optional cross-train'},{d:6,t:'run',desc:'Long run 16km'}]},
+  {w:12,s:[{d:0,t:'gym',desc:'Upper body — deload'},{d:1,t:'run',desc:'Easy run 6km — recovery'},{d:2,t:'gym',desc:'Lower body — lighter'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Easy run 6km'},{d:5,t:'rest',desc:'Rest'},{d:6,t:'run',desc:'Long run 12km — easy'}]},
+  {w:13,s:[{d:0,t:'gym',desc:'Upper body'},{d:1,t:'run',desc:'Easy run 8km'},{d:2,t:'gym',desc:'Lower body'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 7km'},{d:5,t:'opt',desc:'Optional cross-train'},{d:6,t:'run',desc:'Long run 17km'}]},
+  {w:14,s:[{d:0,t:'gym',desc:'Upper body'},{d:1,t:'run',desc:'Easy run 8km'},{d:2,t:'gym',desc:'Lower body'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 8km'},{d:5,t:'opt',desc:'Optional cross-train'},{d:6,t:'run',desc:'Long run 18km'}]},
+  {w:15,s:[{d:0,t:'gym',desc:'Upper body'},{d:1,t:'run',desc:'Easy run 8km'},{d:2,t:'gym',desc:'Lower body'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 8km'},{d:5,t:'opt',desc:'Optional cross-train'},{d:6,t:'run',desc:'Long run 19km'}]},
+  {w:16,s:[{d:0,t:'gym',desc:'Upper body — deload'},{d:1,t:'run',desc:'Easy run 6km — taper begins'},{d:2,t:'gym',desc:'Lower body — lighter'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Easy run 6km'},{d:5,t:'rest',desc:'Rest'},{d:6,t:'run',desc:'Long run 14km'}]},
+  {w:17,s:[{d:0,t:'gym',desc:'Upper body — light'},{d:1,t:'run',desc:'Easy run 7km'},{d:2,t:'gym',desc:'Lower body — light'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 6km'},{d:5,t:'opt',desc:'Optional light jog'},{d:6,t:'run',desc:'Long run 16km'}]},
+  {w:18,s:[{d:0,t:'gym',desc:'Upper body — light'},{d:1,t:'run',desc:'Easy run 6km'},{d:2,t:'gym',desc:'Lower body — light'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Tempo run 5km'},{d:5,t:'opt',desc:'Optional light movement'},{d:6,t:'run',desc:'Long run 13km'}]},
+  {w:19,s:[{d:0,t:'gym',desc:'Upper body — very light'},{d:1,t:'run',desc:'Easy run 5km'},{d:2,t:'rest',desc:'Rest'},{d:3,t:'rest',desc:'Rest'},{d:4,t:'run',desc:'Easy run 4km — shake out'},{d:5,t:'rest',desc:'Rest — prep & sleep'},{d:6,t:'run',desc:'Easy run 3km — last session'}]},
+  {w:20,s:[{d:0,t:'rest',desc:'Rest — visualise the race'},{d:1,t:'rest',desc:'Rest — stay loose'},{d:2,t:'rest',desc:'Rest — light walk only'},{d:3,t:'rest',desc:'Rest — early night'},{d:4,t:'rest',desc:'Rest — race eve'},{d:5,t:'rest',desc:'Rest — race eve'},{d:6,t:'run',desc:'🏁 RACE DAY — Half Marathon 21.1km'}]},
+];
+const DEF_RS=[
+  {id:'hard-rules',name:'Hard Rules',type:'rule',items:[{id:'vape',name:'No vapes',sub:'Zero today'},{id:'food',name:'Clean food',sub:'No processed / salty'},{id:'macros',name:'Hit macros',sub:'2500 kcal · 180P · 220C · 65F'},{id:'training_r',name:'Training done',sub:'Followed plan'},{id:'supps',name:'Supps & electrolytes',sub:'Taken'}]},
+  {id:'morning',name:'Morning Routine',type:'routine',items:[{id:'meditate',name:'Meditate / breathe',sub:'07:00'},{id:'electrolytes',name:'Electrolytes',sub:'07:15'},{id:'vitamins',name:'Vitamins',sub:'07:15'}]},
+  {id:'evening',name:'Evening Routine',type:'routine',items:[{id:'exercise',name:'Exercise',sub:'18:00'},{id:'journal',name:'Journal',sub:'20:00'},{id:'read',name:'Read',sub:'21:00'},{id:'magnesium',name:'Magnesium glycinate',sub:'21:30'}]},
+];
+const TAG_LBL={work:'Work',personal:'Personal',interviews:'Interviews'};
+const TAG_CLS={work:'ttag tag-work',personal:'ttag tag-personal',interviews:'ttag tag-interviews'};
+let todoFilter='all',modalData={},_rs=null;
+
+function tdk(){return new Date().toISOString().slice(0,10)}
+function dko(off){const d=new Date();d.setDate(d.getDate()+off);return d.toISOString().slice(0,10)}
+function fmtO(off){const d=new Date();d.setDate(d.getDate()+off);if(off===0)return'Today — '+d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});if(off===-1)return'Yesterday — '+d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}
+function saveSetting(k,v){localStorage.setItem('dos_s_'+k,v)}
+function getSetting(k,d=''){return localStorage.getItem('dos_s_'+k)||d}
+async function getRS(){if(_rs)return _rs;const s=await gget('rulesets');_rs=s||DEF_RS;return _rs}
+async function saveRS(rs){_rs=rs;await gset('rulesets',rs)}
+function planPos(ds){const d=new Date(ds),diff=Math.floor((d-PLAN_START)/86400000);if(diff<0||diff>=WEEKS.length*7)return null;const wi=Math.floor(diff/7),di=diff%7;return{wi,di,session:WEEKS[wi].s[di]}}
+
+function renderHeader(){
+  const h=new Date().getHours();
+  document.getElementById('greeting').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', Luke.';
+  document.getElementById('hdr-right').innerHTML=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'<br>Race in '+Math.ceil((RACE_DATE-new Date())/86400000)+' days';
+}
+
+async function renderStreak(id){
+  const el=document.getElementById(id);if(!el)return;el.innerHTML='';
+  const rs=await getRS();const hr=(rs.find(r=>r.id==='hard-rules')||{items:[]}).items;
+  for(let i=-6;i<=0;i++){
+    const s=ll(dko(i)+'_rules')||{};
+    const cnt=hr.filter(r=>s[r.id]===true).length;
+    const fail=hr.filter(r=>s[r.id]===false).length;
+    const div=document.createElement('div');
+    div.className='sd '+(i===0?'today-d':cnt===hr.length&&hr.length>0?'full':cnt>0?'partial':fail>0?'fail-d':'');
+    el.appendChild(div);
+  }
+}
+
+async function renderMetrics(){
+  const k=tdk(),rs=await getRS();
+  const hr=(rs.find(r=>r.id==='hard-rules')||{items:[]}).items;
+  const mr=(rs.find(r=>r.id==='morning')||{items:[]}).items;
+  const er=(rs.find(r=>r.id==='evening')||{items:[]}).items;
+  const rdata=ll(k+'_rules')||{},rtdata=ll(k+'_routine')||{};
+  document.getElementById('m-rules').textContent=hr.filter(r=>rdata[r.id]===true).length+'/'+hr.length;
+  document.getElementById('m-routine').textContent=[...mr,...er].filter(r=>rtdata[r.id]).length+'/'+(mr.length+er.length);
+  let streak=0;for(let i=-1;i>=-60;i--){const s=ll(dko(i)+'_rules')||{};if(hr.length>0&&hr.filter(r=>s[r.id]===true).length===hr.length)streak++;else break;}
+  document.getElementById('m-streak').textContent=streak+'d';
+}
+
+async function renderTodaySession(){
+  const pos=planPos(tdk());const ts=document.getElementById('today-session');
+  if(!pos){ts.innerHTML='<div class="rest-pill">Outside plan range.</div>';return;}
+  const s=pos.session,pk='w'+(pos.wi+1)+'d'+pos.di,sd=ll('plan_sessions')||{},sv=sd[pk];
+  if(s.t==='rest'||s.t==='opt'){ts.innerHTML=`<div class="rest-pill">${DAYS[pos.di]} · ${s.desc}</div>`;}
+  else{ts.innerHTML=`<div class="sess"><div class="sess-wk">WEEK ${pos.wi+1} · ${DAYS[pos.di]}</div><div class="sess-desc">${s.desc}</div><div class="sess-btns"><button class="s-btn${sv==='done'?' done':''}" onclick="setPlan('${pk}','done')">✓ Done</button><button class="s-btn${sv==='missed'?' missed':''}" onclick="setPlan('${pk}','missed')">✗ Missed</button></div></div>`;}
+}
+
+function renderCalEvents(){
+  const el=document.getElementById('cal-events');
+  const manual=getSetting('calManual','');
+  const events=[];
+  if(manual.trim())manual.split('\n').forEach(line=>{const m=line.match(/^(\d{1,2}:\d{2})\s+(.+)$/);if(m)events.push({time:m[1],title:m[2]});});
+  events.sort((a,b)=>a.time.localeCompare(b.time));
+  if(!events.length){el.innerHTML='<div class="cal-empty">No events. Add in Routines → Calendar.</div>';return;}
+  el.innerHTML=events.map(e=>`<div class="cal-item"><div class="cal-dot"></div><div class="cal-time">${e.time}</div><div class="cal-title">${e.title}</div></div>`).join('');
+}
+
+async function fetchCalendar(){
+  const url=getSetting('calUrl','');if(!url){alert('Paste a calendar URL first.');return;}
+  try{const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url));const j=await r.json();const ev=parseICS(j.contents||'',tdk());ls('cal_ev',ev);renderCalEvents();}catch{alert('Could not fetch. Try manual entry.');}
+}
+function parseICS(text,ds){const ev=[],re=/BEGIN:VEVENT([\s\S]*?)END:VEVENT/g;let m;while((m=re.exec(text))!==null){const b=m[1],dt=(b.match(/DTSTART[^:]*:(\d{8}T?\d*)/)||[])[1]||'',sum=(b.match(/SUMMARY:(.*)/)||[])[1]||'';if(!dt||!sum)continue;const ed=dt.slice(0,4)+'-'+dt.slice(4,6)+'-'+dt.slice(6,8);if(ed!==ds)continue;let t='All day';if(dt.includes('T')){const x=dt.slice(9,13);t=x.slice(0,2)+':'+x.slice(2,4);}ev.push({time:t,title:sum.trim()});}return ev;}
+
+async function renderRulesRoutine(){
+  const k=tdk(),rs=await getRS(),rdata=ll(k+'_rules')||{},rtdata=ll(k+'_routine')||{};
+  const hRS=rs.find(r=>r.id==='hard-rules')||{items:[]};
+  const rl=document.getElementById('rules-list');rl.innerHTML='';
+  hRS.items.forEach(r=>{const v=rdata[r.id];const div=document.createElement('div');div.className='citem';div.innerHTML=`<div class="citem-col"><div class="ci-lbl">${r.name}</div><div class="ci-sub">${r.sub}</div></div><div class="ci-btns"><button class="ci-btn${v===true?' yes':''}" onclick="setRule('${r.id}',true,event)">✓</button><button class="ci-btn${v===false?' no':''}" onclick="setRule('${r.id}',false,event)">✗</button></div>`;rl.appendChild(div);});
+  ['morning','evening'].forEach(id=>{
+    const rset=rs.find(r=>r.id===id)||{items:[]};
+    const el=document.getElementById(id+'-list');el.innerHTML='';
+    rset.items.forEach(r=>{const done=!!rtdata[r.id];const div=document.createElement('div');div.className='citem';div.innerHTML=`<div class="chk${done?' on':''}" onclick="toggleRoutine('${r.id}')"></div><div class="citem-col"><div class="ci-lbl">${r.name}</div></div><span class="itime">${r.sub||''}</span>`;el.appendChild(div);});
+  });
+}
+
+async function setRule(id,val,e){
+  e.stopPropagation();const k=tdk();const rd=ll(k+'_rules')||{};
+  rd[id]=rd[id]===val?undefined:val;if(rd[id]===undefined)delete rd[id];
+  await gset(k+'_rules',rd);renderToday();
+}
+async function toggleRoutine(id){
+  const k=tdk();const rd=ll(k+'_routine')||{};
+  rd[id]=!rd[id];await gset(k+'_routine',rd);renderToday();
+}
+
+async function renderPlan(){
+  const pw=document.getElementById('plan-weeks');if(!pw)return;pw.innerHTML='';
+  const pos=planPos(tdk());const cwi=pos?pos.wi:-1;const sd=ll('plan_sessions')||{};
+  WEEKS.forEach((wk,wi)=>{
+    const ic=wi===cwi,nr=wk.s.filter(s=>s.t!=='rest'&&s.t!=='opt'),done=nr.filter(s=>sd['w'+(wi+1)+'d'+s.d]==='done').length,pct=nr.length?Math.round(done/nr.length*100):0;
+    const div=document.createElement('div');div.className='week-card';
+    div.innerHTML=`<div class="week-hdr" onclick="toggleWeek(${wi},this)"><div><div class="week-title">Week ${wk.w}${ic?'<span class="curr-badge">now</span>':''}</div><div class="week-prog"><div class="week-prog-fill" style="width:${pct}%"></div></div></div><div style="display:flex;align-items:center;gap:6px"><span class="week-meta">${done}/${nr.length}</span><span class="week-chev${ic?' open':''}">›</span></div></div>
+    <div class="week-body${ic?' open':''}" id="wb-${wi}">${wk.s.map(s=>{const pk='w'+(wi+1)+'d'+s.d,sv=sd[pk],ir=s.t==='rest'||s.t==='opt';return`<div class="plan-row"><span class="plan-day">${DAYS[s.d]}</span><span class="plan-desc${ir?' rest-t':''}">${s.desc}</span>${!ir?`<button class="plan-btn${sv==='done'?' done':sv==='missed'?' missed':''}" onclick="cyclePlan('${pk}')">${sv==='done'?'✓':sv==='missed'?'✗':'—'}</button>`:''}</div>`;}).join('')}</div>`;
+    pw.appendChild(div);
+  });
+}
+function toggleWeek(wi,h){document.getElementById('wb-'+wi).classList.toggle('open');h.querySelector('.week-chev').classList.toggle('open');}
+async function cyclePlan(pk){const sd=ll('plan_sessions')||{};const c=sd[pk];sd[pk]=c==='done'?'missed':c==='missed'?undefined:'done';if(sd[pk]===undefined)delete sd[pk];await gset('plan_sessions',sd);renderPlan();renderTodaySession();}
+async function setPlan(pk,val){const sd=ll('plan_sessions')||{};sd[pk]=sd[pk]===val?undefined:val;if(sd[pk]===undefined)delete sd[pk];await gset('plan_sessions',sd);renderTodaySession();renderPlan();}
+
+async function renderHistory(){
+  await renderStreak('streak-hist');const hl=document.getElementById('hist-list');if(!hl)return;hl.innerHTML='';
+  const rs=await getRS();const hr=(rs.find(r=>r.id==='hard-rules')||{items:[]}).items;
+  for(let i=0;i>=-13;i--){
+    const k=dko(i),rd=ll(k+'_rules')||{};
+    if(!hr.some(r=>rd[r.id]!==undefined)&&i<0)continue;
+    const rdone=hr.filter(r=>rd[r.id]===true).length;
+    const pills=hr.map(r=>`<span class="pill ${rd[r.id]===true?'ok':rd[r.id]===false?'bad':'skip'}">${r.name}</span>`).join('');
+    const notes=ll(k+'_notes')||'';
+    const div=document.createElement('div');div.className='hist-day';
+    div.innerHTML=`<div class="hist-top"><span class="hist-date">${fmtO(i)}</span><span class="hist-score">${rdone}/${hr.length}</span></div><div class="hist-pills">${pills}</div>${notes?`<div class="hist-note">${notes}</div>`:''}`;
+    hl.appendChild(div);
+  }
+  if(!hl.children.length)hl.innerHTML='<div class="empty">No history yet.</div>';
+}
+
+async function renderRoutinesEditor(){
+  document.getElementById('cal-url-inp').value=getSetting('calUrl','');
+  document.getElementById('cal-manual').value=getSetting('calManual','');
+  document.getElementById('notif-time').value=getSetting('notifTime','21:00');
+  const c=document.getElementById('rulesets-editor');c.innerHTML='';
+  const rs=await getRS();
+  rs.forEach((rset,ri)=>{
+    const card=document.createElement('div');card.className='rs-card';
+    card.innerHTML=`<div class="rs-hdr"><span class="rs-name">${rset.name}</span>${ri>=3?`<button style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--rb);background:none;cursor:pointer;color:var(--red);font-family:'DM Sans',sans-serif" onclick="deleteRuleset('${rset.id}')">Delete</button>`:''}</div>
+    ${rset.items.map(item=>`<div class="rs-item"><div style="flex:1"><div class="rs-item-name">${item.name}</div><div class="rs-item-sub">${item.sub||''}</div></div><button class="rs-del" onclick="deleteRuleItem('${rset.id}','${item.id}')">×</button></div>`).join('')}
+    <div class="rs-add-row"><input class="rs-inp" type="text" id="ri-${rset.id}" placeholder="Item name..."><input class="rs-sub-inp" type="text" id="rs-${rset.id}" placeholder="Time / note"><button class="rs-add-btn" onclick="addRuleItem('${rset.id}')">+</button></div>`;
+    c.appendChild(card);
+  });
+}
+
+async function addRuleItem(rsId){
+  const n=document.getElementById('ri-'+rsId).value.trim();if(!n)return;
+  const sub=document.getElementById('rs-'+rsId).value.trim();
+  const rs=await getRS();const rset=rs.find(r=>r.id===rsId);if(!rset)return;
+  rset.items.push({id:rsId+'_'+Date.now(),name:n,sub});
+  await saveRS(rs);renderRoutinesEditor();renderToday();
+}
+async function deleteRuleItem(rsId,itemId){
+  const rs=await getRS();const rset=rs.find(r=>r.id===rsId);if(!rset)return;
+  rset.items=rset.items.filter(i=>i.id!==itemId);await saveRS(rs);renderRoutinesEditor();renderToday();
+}
+async function addRuleset(){
+  const n=document.getElementById('new-rs-name').value.trim();if(!n)return;
+  const rs=await getRS();rs.push({id:'rs_'+Date.now(),name:n,type:'routine',items:[]});
+  await saveRS(rs);document.getElementById('new-rs-name').value='';renderRoutinesEditor();
+}
+async function deleteRuleset(rsId){
+  if(!confirm('Delete?'))return;
+  const rs=(await getRS()).filter(r=>r.id!==rsId);await saveRS(rs);renderRoutinesEditor();renderToday();
+}
+
+async function renderTodos(){
+  const todos=(await gget('todos'))||[];const list=document.getElementById('tlist');list.innerHTML='';
+  const filtered=todos.filter(t=>todoFilter==='all'?!t.done:todoFilter==='done'?t.done:t.tag===todoFilter&&!t.done);
+  document.getElementById('tcnt').textContent=todos.filter(t=>!t.done).length+' remaining · '+todos.filter(t=>t.done).length+' done';
+  if(!filtered.length){list.innerHTML='<div class="empty">Nothing here.</div>';return;}
+  filtered.forEach(t=>{const div=document.createElement('div');div.className='ti';div.innerHTML=`<div class="tck${t.done?' on':''}" onclick="toggleTodo('${t.id}')"></div><span class="ttxt${t.done?' done':''}" onclick="toggleTodo('${t.id}')">${t.text}</span><span class="${TAG_CLS[t.tag]||'ttag tag-personal'}">${TAG_LBL[t.tag]||t.tag}</span><button class="tdel" onclick="deleteTodo('${t.id}')">×</button>`;list.appendChild(div);});
+}
+async function addTodo(){const inp=document.getElementById('todo-inp');const text=inp.value.trim();if(!text)return;const tag=document.getElementById('todo-sel').value;const todos=(await gget('todos'))||[];todos.unshift({id:Date.now().toString(),text,tag,done:false});await gset('todos',todos);inp.value='';renderTodos();}
+async function toggleTodo(id){const todos=(await gget('todos'))||[];const t=todos.find(x=>x.id===id);if(t)t.done=!t.done;await gset('todos',todos);renderTodos();}
+async function deleteTodo(id){const todos=((await gget('todos'))||[]).filter(t=>t.id!==id);await gset('todos',todos);renderTodos();}
+async function clearDone(){const todos=((await gget('todos'))||[]).filter(t=>!t.done);await gset('todos',todos);renderTodos();}
+function setFilter(f,btn){todoFilter=f;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTodos();}
+
+async function openCheckin(){
+  const k=tdk();const rd=ll(k+'_rules')||{};const saved=ll(k+'_checkin')||{};modalData={...saved};
+  const rs=await getRS();const hr=(rs.find(r=>r.id==='hard-rules')||{items:[]}).items;
+  hr.forEach(r=>{if(rd[r.id]!==undefined&&modalData['ci_'+r.id]===undefined)modalData['ci_'+r.id]=rd[r.id];});
+  const qs=[...hr.map(r=>({id:'ci_'+r.id,q:r.name,type:'yn',rule:r.id})),{id:'ci_note',q:'How did today go?',type:'note',ph:'One honest sentence...'}];
+  const c=document.getElementById('modal-qs');c.innerHTML='';
+  qs.forEach(q=>{const div=document.createElement('div');div.className='modal-q';
+    if(q.type==='yn'){const v=modalData[q.id];div.innerHTML=`<div class="modal-qlbl">${q.q}</div><div class="modal-btns"><button class="modal-btn${v===true?' yes':''}" onclick="setCI('${q.id}',true,this)">✓ Yes</button><button class="modal-btn${v===false?' no':''}" onclick="setCI('${q.id}',false,this)">✗ No</button></div>`;}
+    else{div.innerHTML=`<div class="modal-qlbl">${q.q}</div><textarea class="modal-note" rows="2" placeholder="${q.ph||''}" oninput="modalData['${q.id}']=this.value">${modalData[q.id]||''}</textarea>`;}
+    c.appendChild(div);
+  });
+  document.getElementById('modal-bg').classList.add('open');
+}
+function setCI(id,val,btn){modalData[id]=modalData[id]===val?undefined:val;if(modalData[id]===undefined)delete modalData[id];btn.closest('.modal-btns').querySelectorAll('.modal-btn').forEach(b=>b.classList.remove('yes','no'));if(modalData[id]===true)btn.classList.add('yes');if(modalData[id]===false)btn.classList.add('no');}
+async function saveCheckin(){
+  const k=tdk();ls(k+'_checkin',modalData);
+  const rd=ll(k+'_rules')||{};const rs=await getRS();const hr=(rs.find(r=>r.id==='hard-rules')||{items:[]}).items;
+  hr.forEach(r=>{if(modalData['ci_'+r.id]!==undefined)rd[r.id]=modalData['ci_'+r.id];});
+  await gset(k+'_rules',rd);
+  if(modalData.ci_note)await gset(k+'_notes',modalData.ci_note);
+  closeModal();renderToday();
+}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');}
+document.getElementById('modal-bg').addEventListener('click',function(e){if(e.target===this)closeModal();});
+async function resetDay(){const k=tdk();await gset(k+'_rules',{});await gset(k+'_routine',{});ls(k+'_checkin',{});renderToday();}
+
+async function requestNotif(){if(!('Notification'in window))return;const p=await Notification.requestPermission();if(p==='granted')scheduleNotif();}
+function scheduleNotif(){
+  if(!('serviceWorker'in navigator)||Notification.permission!=='granted')return;
+  const t=getSetting('notifTime','21:00');const[h,m]=t.split(':').map(Number);
+  const now=new Date(),target=new Date();target.setHours(h,m,0,0);
+  if(target<=now)target.setDate(target.getDate()+1);
+  navigator.serviceWorker.ready.then(reg=>{reg.active&&reg.active.postMessage({type:'SCHEDULE_NOTIF',delay:target-now});});
+}
+
+function switchPage(p,btn){
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(p==='history')renderHistory();
+  if(p==='training')renderPlan();
+  if(p==='routines')renderRoutinesEditor();
+  if(p==='todo')renderTodos();
+}
+
+async function renderToday(){renderHeader();await renderStreak('streak-today');await renderMetrics();await renderTodaySession();renderCalEvents();await renderRulesRoutine();}
+
+(async()=>{
+  await syncDown();
+  await renderToday();
+  renderTodos();
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').then(()=>scheduleNotif());
+  if(new Date().getHours()>=21){const k=tdk();if(!(ll(k+'_checkin')&&Object.keys(ll(k+'_checkin')).length))setTimeout(openCheckin,1500);}
+})();
+</script>
+</body>
+</html>

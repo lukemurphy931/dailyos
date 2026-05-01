@@ -1,0 +1,77 @@
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#f5f5f3"/>
+
+  <!-- PRIMARY MARK -->
+  <rect x="275" y="60" width="250" height="250" fill="#0e0e10"/>
+  <rect x="275" y="60" width="14" height="250" fill="#169B62"/>
+  <!-- L -->
+  <line x1="318" y1="107" x2="318" y2="273" stroke="#f0f0f0" stroke-width="20" stroke-linecap="square"/>
+  <line x1="318" y1="273" x2="368" y2="273" stroke="#f0f0f0" stroke-width="20" stroke-linecap="square"/>
+  <!-- A -->
+  <line x1="400" y1="107" x2="366" y2="273" stroke="#f0f0f0" stroke-width="20" stroke-linecap="square"/>
+  <line x1="400" y1="107" x2="434" y2="273" stroke="#f0f0f0" stroke-width="20" stroke-linecap="square"/>
+  <line x1="376" y1="224" x2="424" y2="224" stroke="#169B62" stroke-width="14" stroke-linecap="square"/>
+  <!-- M -->
+  <line x1="448" y1="273" x2="448" y2="107" stroke="#f0f0f0" stroke-width="20" stroke-linecap="square"/>
+  <line x1="448" y1="107" x2="481" y2="190" stroke="#f0f0f0" stroke-width="20" stroke-linecap="square"/>
+  <line x1="481" y1="190" x2="514" y2="107" stroke="#f0f0f0" stroke-width="20" stroke-linecap="square"/>
+  <line x1="514" y1="107" x2="514" y2="273" stroke="#f0f0f0" stroke-width="20" stroke-linecap="square"/>
+
+  <!-- wordmark -->
+  <text x="400" y="346" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="13" font-weight="normal" fill="#0e0e10" letter-spacing="9">LUKE  MURPHY</text>
+
+  <!-- VARIANT 1 — dark (app icon) -->
+  <rect x="60" y="410" width="130" height="130" fill="#0e0e10"/>
+  <rect x="60" y="410" width="8" height="130" fill="#169B62"/>
+  <line x1="83" y1="434" x2="83" y2="508" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="83" y1="508" x2="107" y2="508" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="125" y1="434" x2="107" y2="508" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="125" y1="434" x2="143" y2="508" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="113" y1="484" x2="137" y2="484" stroke="#169B62" stroke-width="8" stroke-linecap="square"/>
+  <line x1="151" y1="508" x2="151" y2="434" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="151" y1="434" x2="169" y2="471" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="169" y1="471" x2="187" y2="434" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="187" y1="434" x2="187" y2="508" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <text x="125" y="560" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#888" letter-spacing="1">dark</text>
+
+  <!-- VARIANT 2 — white -->
+  <rect x="225" y="410" width="130" height="130" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
+  <rect x="225" y="410" width="8" height="130" fill="#169B62"/>
+  <line x1="248" y1="434" x2="248" y2="508" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="248" y1="508" x2="272" y2="508" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="290" y1="434" x2="272" y2="508" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="290" y1="434" x2="308" y2="508" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="278" y1="484" x2="302" y2="484" stroke="#169B62" stroke-width="8" stroke-linecap="square"/>
+  <line x1="316" y1="508" x2="316" y2="434" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="316" y1="434" x2="334" y2="471" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="334" y1="471" x2="352" y2="434" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="352" y1="434" x2="352" y2="508" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <text x="290" y="560" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#888" letter-spacing="1">light</text>
+
+  <!-- VARIANT 3 — green -->
+  <rect x="390" y="410" width="130" height="130" fill="#169B62"/>
+  <line x1="413" y1="434" x2="413" y2="508" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="413" y1="508" x2="437" y2="508" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="455" y1="434" x2="437" y2="508" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="455" y1="434" x2="473" y2="508" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="443" y1="484" x2="467" y2="484" stroke="#0e0e10" stroke-width="8" stroke-linecap="square"/>
+  <line x1="481" y1="508" x2="481" y2="434" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="481" y1="434" x2="499" y2="471" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="499" y1="471" x2="517" y2="434" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <line x1="517" y1="434" x2="517" y2="508" stroke="#f0f0f0" stroke-width="11" stroke-linecap="square"/>
+  <text x="455" y="560" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#888" letter-spacing="1">green</text>
+
+  <!-- VARIANT 4 — outline -->
+  <rect x="555" y="410" width="130" height="130" fill="none" stroke="#0e0e10" stroke-width="2"/>
+  <rect x="555" y="410" width="8" height="130" fill="#169B62"/>
+  <line x1="578" y1="434" x2="578" y2="508" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="578" y1="508" x2="602" y2="508" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="620" y1="434" x2="602" y2="508" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="620" y1="434" x2="638" y2="508" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="608" y1="484" x2="632" y2="484" stroke="#169B62" stroke-width="8" stroke-linecap="square"/>
+  <line x1="646" y1="508" x2="646" y2="434" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="646" y1="434" x2="664" y2="471" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="664" y1="471" x2="682" y2="434" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <line x1="682" y1="434" x2="682" y2="508" stroke="#0e0e10" stroke-width="11" stroke-linecap="square"/>
+  <text x="620" y="560" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#888" letter-spacing="1">outline</text>
+</svg>
